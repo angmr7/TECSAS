@@ -61,7 +61,7 @@ pip install -e .
 pip install torch numpy pyBigWig requests joblib tqdm urllib3
 ```
 
-**Note**: For GPU acceleration, ensure you have CUDA-compatible PyTorch installed:
+**Note**: For GPU acceleration, ensure you have CUDA-compatible PyTorch installed
 
 
 
