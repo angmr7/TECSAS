@@ -27,8 +27,12 @@ For complete examples, see the [Tutorials](Tutorials/) directory.
 
 - **Tutorials**: Step-by-step notebooks in the [Tutorials/](Tutorials/) directory
   - `Load_model_GM12878_155exp_50kbp.ipynb`: Load and use pre-trained GM12878 subcompartment model
+  - `Test_GM12878_155exp_50kbp.ipynb`: Evaluate the pre-trained GM12878 model with per-class accuracy and confusion matrices
   - `Load_model_K562_124_exp_25kbp.ipynb`: Load K562 model at 25kb resolution
+  - `train_and_predict_HistMod_example.ipynb`: Training workflow using histone modifications
   - `train_and_predict_XADS_HistMod_RNASeq.ipynb`: Complete workflow for nuclear body association (LADs/NADs/SPADs) prediction using transfer learning
+- **Pre-trained models**: Model weights in [TECSAS/share/models/](TECSAS/share/models/)
+  - `bv_GM12878_155.pt`: GM12878 model trained with 155 experiments at 50kbp resolution (75.8% overall accuracy)
 - **Reference data**: Subcompartment annotations and nuclear body association labels (LADs, NADs, SPADs) in [TECSAS/share/](TECSAS/share/)
 
 ## Installation
@@ -73,15 +77,45 @@ pip install torch numpy pyBigWig requests joblib tqdm urllib3
 
 ## Quick Start
 
+### Option A: Use pre-trained weights
+
+Pre-trained model weights for GM12878 (155 experiments, 50kbp resolution) are included in [`TECSAS/share/models/`](TECSAS/share/models/). You can load and use them directly without retraining:
+
+```python
+import torch
+from TECSAS import TECSAS
+
+# Model configuration matching the pre-trained weights
+n_neighbors = 14   # Neighboring bins on each side (context window)
+n_predict = 3      # Number of loci to predict
+NEXP = 155         # Number of experiments in GM12878
+nfeatures = NEXP * (2 * n_neighbors + 1)  # 155 * 29 = 4495
+
+model = TECSAS(n_predict, emsize=128, nhead=8, d_hid=64, nlayers=2,
+               nfeatures=nfeatures, ostates=5, dropout=0.01)
+
+# Load pre-trained weights (keys have a 'module.' prefix from DataParallel)
+state = torch.load('TECSAS/share/models/bv_GM12878_155.pt', map_location='cpu')
+model.load_state_dict({'.'.join(k.split('.')[1:]): v for k, v in state.items()})
+model.eval()
+```
+
+See [`Tutorials/Load_model_GM12878_155exp_50kbp.ipynb`](Tutorials/Load_model_GM12878_155exp_50kbp.ipynb) for a complete evaluation example.
+
+### Option B: Train from scratch
+
+If you want to retrain the model on your own data or a different cell line:
+
 1. **Import TECSAS**:
    ```python
    from TECSAS import data_process, TECSAS
    ```
 
-2. **Download data for your cell line**:
+2. **Download and process epigenomic data from ENCODE**:
    ```python
    dp = data_process(cell_line='GM12878', assembly='hg19', histones=True, tf=True)
    dp.download_and_process_cell_line_data(nproc=10)
+   dp.download_and_process_ref_data(nproc=10)
    ```
 
 3. **Generate training data**:
@@ -89,19 +123,20 @@ pip install torch numpy pyBigWig requests joblib tqdm urllib3
    train, val, test, averages, indices = dp.training_data(n_neigbors=14, train_per=0.8)
    ```
 
-4. **Train or load a model**:
+4. **Initialize and train the model**:
    ```python
    model = TECSAS(n_predict=3, emsize=128, nhead=8, d_hid=64, nlayers=2,
-                  nfeatures=29, ostates=5, dropout=0.01)
-   # Train or load pre-trained weights
-   model.load_state_dict(torch.load('model.pt'))
+                  nfeatures=NEXP*(2*14+1), ostates=5, dropout=0.01)
+   # ... training loop (see Tutorials/train_and_predict_HistMod_example.ipynb)
    ```
 
-5. **Make predictions**:
+5. **Make predictions on a target cell line**:
    ```python
-   test_data, averages = dp.test_set(chr=1)
+   test_data = dp.test_set(chr=1)
    predictions = model(test_data, None)[0].argmax(dim=-1)
    ```
+
+See the [Tutorials/](Tutorials/) directory for complete training and prediction workflows.
 
 ## Citation
 
