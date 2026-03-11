@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "TECSAS"
+version = "1.0.0"
+description = "Transformer of Epigenetics to Chromatin Structural AnnotationS"
+license = "MIT"
+requires-python = ">=3.6"
+dependencies = [
+    "torch>=1.7.0",
+    "numpy>=1.18",
+    "pyBigWig",
+    "requests",
+    "joblib",
+    "tqdm",
+    "urllib3",
+]
+
+[tool.setuptools.packages.find]
+include = ["TECSAS*"]
+
+[tool.setuptools.package-data]
+TECSAS = ["share/**/*"]
