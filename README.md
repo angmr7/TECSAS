@@ -45,6 +45,12 @@ TECSAS requires Python 3.6+ and the following dependencies:
 - tqdm
 - urllib3
 
+### Install from PyPI
+
+```bash
+pip install TECSAS
+```
+
 ### Install from source
 
 Clone the repository and install:
