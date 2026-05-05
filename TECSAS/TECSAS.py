@@ -47,6 +47,9 @@ class data_process:
         self.organism=organism.lower()
         if file_format.lower()=='bigwig':self.file_format='bigWig'
         elif file_format.lower()=='bed': self.file_format='bed+narrowPeak'
+        #Default to empty experiment lists; populated below only when require_ENCODE=True
+        self.experiments_unique=np.array([])
+        self.es_unique=[]
         #Define translation dictinaries between aminoacids, intensity of Chip-seq signal/RNASeq count and states of the model
         self.RES_TO_INT = {
                 'A': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5,
